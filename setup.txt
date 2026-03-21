@@ -1,0 +1,39 @@
+=====================================
+AgriPulse App Setup & Running Guide
+=====================================
+
+This guide explains how your team can pull, setup, and run the AgriPulse React Native Expo application locally.
+
+1. Prerequisites
+-------------------
+• Node.js installed (LTS recommended)
+• A physical Android/iOS phone with the 'Expo Go' app installed.
+• Alternatively, set up an Android Emulator or iOS Simulator on your computer.
+
+2. Getting Started (First Time Setup)
+-------------------
+• Clone or download the repository to your local machine.
+• Open your terminal/command prompt.
+• Navigate into the project folder:
+  cd path/to/agri_hackathon_26
+• Install all dependencies. We recommend using the following flag to bypass potential dependency conflicts:
+  npm install --legacy-peer-deps
+
+3. Running the App
+-------------------
+• Once dependencies are installed, start the local Expo server:
+  npx expo start -c
+  (The "-c" clears the cache to ensure you have the freshest build).
+• You will see a QR code appear in the terminal.
+• Open 'Expo Go' on your mobile device and scan the QR code.
+• Or, press 'a' in the terminal to launch on a running Android emulator, or 'i' for iOS.
+
+4. Making Changes
+-------------------
+• Entry Point: Open `App.js` in the root folder.
+• Navigation: The screens are routed in `src/navigation/AppNavigator.js`.
+• Screens: All UI code lives inside `src/screens/`. Change the code there and hit 'Save' - the app should "hot reload" instantly!
+
+5. Troubleshooting
+-------------------
+• "Unable to resolve module": This happens if someone copied node_modules from another project. Delete the `node_modules` folder, clear cache, and run `npm install --legacy-peer-deps` again.
