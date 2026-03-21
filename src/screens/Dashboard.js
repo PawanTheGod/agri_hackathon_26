@@ -14,8 +14,12 @@ export default function Dashboard({ navigation }) {
       <View style={styles.headerGradient}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.welcomeText}>नमस्कार,</Text>
+            <Text style={styles.welcomeText}>नमस्कार, (Welcome back)</Text>
             <Text style={styles.farmName}>रामराव शिंदे की खेत</Text>
+            <View style={styles.statusIndicator}>
+              <View style={styles.liveDot} />
+              <Text style={styles.statusText}>सभी सेंसर चालू हैं (All systems active)</Text>
+            </View>
           </View>
           <View style={styles.logoContainer}>
             <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
@@ -84,6 +88,29 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  liveDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#81C784',
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#F1F8E9',
+    textTransform: 'uppercase',
   },
   logoContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.9)',

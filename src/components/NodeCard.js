@@ -30,15 +30,29 @@ export default function NodeCard({ node }) {
 
         <View style={styles.dataRow}>
           <MaterialCommunityIcons name="water-percent" size={20} color="#2196F3" />
-          <Text style={styles.nodeText}>Moisture: <Text style={styles.valueText}>{node.moisture}%</Text></Text>
+          <View style={styles.labelCol}>
+            <Text style={styles.nodeTextEn}>Moisture</Text>
+            <Text style={styles.nodeTextHi}>नमी</Text>
+          </View>
+          <Text style={styles.valueText}>{node.moisture}%</Text>
         </View>
+
         <View style={styles.dataRow}>
-          <MaterialCommunityIcons name="lightning-bolt-outline" size={20} color="#FF9800" />
-          <Text style={styles.nodeText}>EC: <Text style={styles.valueText}>{node.ec}</Text></Text>
+          <MaterialCommunityIcons name="lightning-bolt-outline" size={20} color="#FFB300" />
+          <View style={styles.labelCol}>
+            <Text style={styles.nodeTextEn}>Soil EC</Text>
+            <Text style={styles.nodeTextHi}>ईसी (नमक)</Text>
+          </View>
+          <Text style={styles.valueText}>{node.ec}</Text>
         </View>
+
         <View style={styles.dataRow}>
           <MaterialCommunityIcons name="thermometer" size={20} color="#F44336" />
-          <Text style={styles.nodeText}>Temp: <Text style={styles.valueText}>{node.temperature}°C</Text></Text>
+          <View style={styles.labelCol}>
+            <Text style={styles.nodeTextEn}>Temp.</Text>
+            <Text style={styles.nodeTextHi}>तापमान</Text>
+          </View>
+          <Text style={styles.valueText}>{node.temperature}°C</Text>
         </View>
       </Card.Content>
     </Card>
@@ -75,15 +89,26 @@ const styles = StyleSheet.create({
   dataRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 10,
+    justifyContent: 'space-between',
   },
-  nodeText: {
-    fontSize: 14,
-    color: '#546E7A',
+  labelCol: {
+    flex: 1,
     marginLeft: 8,
   },
+  nodeTextEn: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#546E7A',
+  },
+  nodeTextHi: {
+    fontSize: 11,
+    color: '#78909C',
+    marginTop: -2,
+  },
   valueText: {
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
     color: '#263238',
   },
 });

@@ -58,7 +58,7 @@ export default function NPKTest() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20 }}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.contentContainer, { padding: 20 }]}>
       <Surface style={styles.resultHeader}>
         <MaterialCommunityIcons name="check-decagram" size={40} color="#43A047" />
         <Text style={styles.resultTitle}>Analysis Complete</Text>
@@ -94,7 +94,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+  },
+  contentContainer: {
     justifyContent: 'center',
+    flexGrow: 1,
   },
   mainCard: {
     margin: 30,
