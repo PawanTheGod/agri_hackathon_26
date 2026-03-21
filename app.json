@@ -17,7 +17,14 @@
         "backgroundColor": "#4CAF50"
       }
     },
+    "icon": "./assets/logo.png",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "web": {
+      "favicon": "./assets/logo.png",
       "bundler": "metro",
       "output": "single"
     }

@@ -17,7 +17,9 @@ export default function Dashboard({ navigation }) {
             <Text style={styles.welcomeText}>नमस्कार,</Text>
             <Text style={styles.farmName}>रामराव शिंदे की खेत</Text>
           </View>
-          <Avatar.Text size={48} label="RS" style={{ backgroundColor: '#FFD54F' }} labelStyle={{ color: '#2E7D32' }} />
+          <View style={styles.logoContainer}>
+            <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          </View>
         </View>
 
         <TouchableOpacity 
@@ -82,6 +84,16 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+  logoContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 4,
+    borderRadius: 12,
+    elevation: 4,
+  },
+  logo: {
+    width: 50,
+    height: 50,
   },
   voiceWrapper: {
     marginTop: 10,
