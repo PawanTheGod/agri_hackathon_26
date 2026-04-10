@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, StatusBar, Alert, ActivityIndicator, Modal,
+  TextInput, StatusBar, Alert, ActivityIndicator, Modal, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SHADOWS } from '../theme';
-import { supabase } from '../services/api';
+import { getAdminSupabase } from '../services/api';
 
 const ADMIN_PASSWORD = 'agri2026';
 
@@ -30,9 +30,14 @@ export default function AdminScreen({ onExitAdmin }) {
 
   const fetchFarmers = async () => {
     setLoading(true);
-    const { data: farmsData, error: farmsError } = await supabase.from('farms').select('*');
-    const { data: dbFarmers, error: farmersError } = await supabase.from('farmers').select('*, farms(*)');
-    
+    const supabase = getAdminSupabase();
+    if (!supabase) {
+      // Demo mode — show placeholder data
+      setFarmers([{ id: 'demo_001', farm_id: 'farm_001', name: 'रामराव शिंदे', village: 'Pune, MH', crop: 'Soybean', phone: '9876543210', area: '3.5 acres', status: 'active', lastSync: new Date().toISOString() }]);
+      setLoading(false);
+      return;
+    }
+    const { data: dbFarmers } = await supabase.from('farmers').select('*, farms(*)');
     if (dbFarmers) {
       const formatted = dbFarmers.map(f => ({
         id: f.id,
@@ -64,26 +69,19 @@ export default function AdminScreen({ onExitAdmin }) {
       Alert.alert('Error', 'Name and phone are required');
       return;
     }
-    
-    // 1. Create Farm record first
+    const supabase = getAdminSupabase();
+    if (!supabase) { Alert.alert('Demo Mode', 'Supabase not configured — cannot add farmers.'); return; }
+
     const newFarmId = `farm_${Date.now()}`;
     const { error: farmError } = await supabase.from('farms').insert({
-      id: newFarmId,
-      farmer_name: form.name,
-      farm_name: `${form.name}'s Farm`,
-      current_crop: form.crop || 'Unknown'
+      id: newFarmId, farmer_name: form.name,
+      farm_name: `${form.name}'s Farm`, current_crop: form.crop || 'Unknown'
     });
-
     if (farmError) { Alert.alert('Error', farmError.message); return; }
 
-    // 2. Create Farmer record
     const { error: farmerError } = await supabase.from('farmers').insert({
-      farm_id: newFarmId,
-      phone: form.phone,
-      village: form.village,
-      status: 'active'
+      farm_id: newFarmId, phone: form.phone, village: form.village, status: 'active'
     });
-
     if (farmerError) { Alert.alert('Error', farmerError.message); return; }
 
     Alert.alert('✅ Done!', `${form.name} has been onboarded successfully.`);
@@ -93,12 +91,14 @@ export default function AdminScreen({ onExitAdmin }) {
   };
 
   const handleDeleteFarmer = async (id) => {
+    if (id === 'demo_001') { Alert.alert('Demo Mode', 'Cannot delete demo data.'); return; }
     Alert.alert('Remove Farmer', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove', style: 'destructive',
         onPress: async () => {
-          await supabase.from('farmers').delete().eq('id', id);
+          const supabase = getAdminSupabase();
+          if (supabase) await supabase.from('farmers').delete().eq('id', id);
           fetchFarmers();
         },
       },
@@ -106,6 +106,8 @@ export default function AdminScreen({ onExitAdmin }) {
   };
 
   const toggleStatus = async (id, currentStatus) => {
+    const supabase = getAdminSupabase();
+    if (!supabase) return;
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
     await supabase.from('farmers').update({ status: newStatus }).eq('id', id);
     fetchFarmers();
@@ -337,7 +339,7 @@ function FarmerCard({ farmer, onDelete, onToggleStatus, onView }) {
   );
 }
 const fcStyles = StyleSheet.create({
-  card: { backgroundColor: '#fff', borderRadius: 16, marginHorizontal: 16, marginBottom: 14, padding: 16, ...SHADOWS.card },
+  card: { backgroundColor: '#fff', borderRadius: 16, marginHorizontal: 16, marginBottom: 14, padding: 16, ...SHADOWS.soft },
   row: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   avatar: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   avatarText: { fontSize: 20, fontWeight: '800', color: COLORS.primary },

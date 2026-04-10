@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -23,6 +23,10 @@ export default function AppNavigator() {
   const [authFarmer, setAuthFarmer] = useState(null);
   const { t } = useLang();
 
+  const handleLogout = () => {
+    setAuthFarmer(null);
+  };
+
   if (isAdminMode) {
     return <AdminScreen onExitAdmin={() => setIsAdminMode(false)} />;
   }
@@ -38,10 +42,10 @@ export default function AppNavigator() {
           headerShown: false,
           tabBarIcon: ({ focused, color }) => {
             let iconName;
-            if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-            if (route.name === 'Advisory') iconName = focused ? 'book-open-variant' : 'book-open-page-variant-outline';
-            if (route.name === 'NPKTest') iconName = focused ? 'flask-round-bottom' : 'flask-round-bottom-outline';
-            if (route.name === 'Map') iconName = focused ? 'map-marker-radius' : 'map-marker-radius-outline';
+            if (route.name === 'Home')     iconName = focused ? 'home'                     : 'home-outline';
+            if (route.name === 'Advisory') iconName = focused ? 'book-open-variant'         : 'book-open-page-variant-outline';
+            if (route.name === 'NPKTest')  iconName = focused ? 'flask-round-bottom'        : 'flask-round-bottom-outline';
+            if (route.name === 'Map')      iconName = focused ? 'map-marker-radius'         : 'map-marker-radius-outline';
             return <MaterialCommunityIcons name={iconName} size={focused ? 28 : 24} color={color} />;
           },
           tabBarActiveTintColor: COLORS.primary,
@@ -53,7 +57,6 @@ export default function AppNavigator() {
       >
         <Tab.Screen
           name="Home"
-          component={Dashboard}
           options={{ title: t('होम', 'Home', 'मुख्यपृष्ठ') }}
           listeners={{
             tabLongPress: () => {
@@ -66,13 +69,47 @@ export default function AppNavigator() {
               }
             },
           }}
-        />
+        >
+          {(props) => (
+            <DashboardWrapper
+              {...props}
+              onLogout={handleLogout}
+            />
+          )}
+        </Tab.Screen>
+
         <Tab.Screen name="Advisory" component={Advisory} options={{ title: t('सलाह', 'Advisory', 'सल्ला') }} />
-        <Tab.Screen name="NPKTest" component={NPKTest} options={{ title: t('मिट्टी जाँच', 'Soil Test', 'माती परीक्षण') }} />
-        <Tab.Screen name="Map" component={FarmMap} options={{ title: t('नक्शा', 'Map', 'नकाशा') }} />
+        <Tab.Screen name="NPKTest"  component={NPKTest}  options={{ title: t('मिट्टी जाँच', 'Soil Test', 'माती परीक्षण') }} />
+        <Tab.Screen name="Map"      component={FarmMap}  options={{ title: t('नक्शा', 'Map', 'नकाशा') }} />
       </Tab.Navigator>
     </NavigationContainer>
   );
+}
+
+// ─── Wrapper: intercepts __LOGOUT__ navigation from Dashboard ──
+function DashboardWrapper({ navigation, route, onLogout }) {
+  // Listen for the logout special route signal
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('state', () => {});
+
+    // Patch navigation to intercept __LOGOUT__
+    const origNavigate = navigation.navigate.bind(navigation);
+    navigation.navigate = (name, params) => {
+      if (name === '__LOGOUT__') {
+        onLogout();
+        return;
+      }
+      origNavigate(name, params);
+    };
+
+    return () => {
+      // Restore
+      navigation.navigate = origNavigate;
+      unsubscribe();
+    };
+  }, [navigation, onLogout]);
+
+  return <Dashboard navigation={navigation} route={route} />;
 }
 
 const styles = StyleSheet.create({

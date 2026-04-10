@@ -7,7 +7,7 @@ const SARVAM_API_URL = 'https://api.sarvam.ai/text-to-speech';
 const SARVAM_API_KEY = process.env.EXPO_PUBLIC_SARVAM_API_KEY;
 
 if (!SARVAM_API_KEY) {
-  console.error('[TTS] CRITICAL: EXPO_PUBLIC_SARVAM_API_KEY is missing from environment.');
+  console.warn('[TTS] EXPO_PUBLIC_SARVAM_API_KEY not set — will use Web Speech API fallback.');
 }
 
 // ── State ─────────────────────────────────────────────────────
@@ -59,26 +59,35 @@ export async function speak(text, langCode = 'hi-IN', options = {}) {
   }
 }
 
-// ── Specialized: Speak Advisory Object ────────────────────────
-export async function speakAdvisory(data, lang, name, options = {}) {
+// ── Specialized: Speak Full Advisory Summary ──────────────────
+export async function speakAdvisory(dashData, lang, name, options = {}) {
+  const alerts   = dashData?.alerts?.length || 0;
+  const nodes    = dashData?.nodes || [];
+  const avgMoist = nodes.length ? Math.round(nodes.reduce((s, n) => s + n.moisture, 0) / nodes.length) : '--';
+  const avgTemp  = nodes.length ? (nodes.reduce((s, n) => s + n.temperature, 0) / nodes.length).toFixed(1) : '--';
+  const critNode = nodes.find(n => n.moisture < 25);
+
   let text = '';
-  const alerts = data?.alerts?.length || 0;
-  
   if (lang === 'hi') {
-    text = `नमस्ते ${name || 'किसान'} जी! `;
-    if (alerts > 0) text += `आपके खेत में ${alerts} क्षेत्र में पानी की कमी है। `;
-    else text += `खेत में नमी का स्तर बहुत अच्छा है। `;
-    text += `आज का तापमान ${data?.nodes?.[0]?.temperature || 24} डिग्री है।`;
+    text = `नमस्ते ${name || 'किसान'} जी! यह आपकी आज की खेत रिपोर्ट है। `;
+    if (critNode) text += `Node ${critNode.node_id} में नमी केवल ${critNode.moisture} प्रतिशत है — तुरंत सिंचाई करें। `;
+    else if (alerts > 0) text += `${alerts} क्षेत्रों में पानी की जरूरत है। `;
+    else text += `सभी क्षेत्रों में नमी उत्तम है। `;
+    text += `औसत नमी ${avgMoist} प्रतिशत और तापमान ${avgTemp} डिग्री है।`;
+    if (avgTemp > 32) text += ` तापमान अधिक है — फसल को छाया दें।`;
   } else if (lang === 'mr') {
-    text = `नमस्कार ${name || 'शेतकरी'} जी! `;
-    if (alerts > 0) text += `तुमच्या शेतात ${alerts} ठिकाणी पाण्याची गरज आहे. `;
-    else text += `शेतात ओलावा पातळी खूप चांगली आहे. `;
-    text += `आजचे तापमान ${data?.nodes?.[0]?.temperature || 24} अंश आहे।`;
+    text = `नमस्कार ${name || 'शेतकरी'}! हा तुमचा आजचा शेत अहवाल. `;
+    if (critNode) text += `Node ${critNode.node_id} मध्ये ओलावा फक्त ${critNode.moisture} टक्के आहे — तातडीने सिंचन करा. `;
+    else if (alerts > 0) text += `${alerts} ठिकाणी पाणी आवश्यक आहे. `;
+    else text += `सर्व क्षेत्रांत ओलावा उत्तम आहे. `;
+    text += `सरासरी ओलावा ${avgMoist} टक्के आणि तापमान ${avgTemp} अंश आहे.`;
   } else {
-    text = `Hello ${name || 'Farmer'}! `;
-    if (alerts > 0) text += `There are ${alerts} areas needing water. `;
-    else text += `Moisture levels are optimal across all zones. `;
-    text += `Current temperature is ${data?.nodes?.[0]?.temperature || 24} degrees.`;
+    text = `Hello ${name || 'Farmer'}! Here's your farm report for today. `;
+    if (critNode) text += `Node ${critNode.node_id} is critically dry at ${critNode.moisture}% — irrigate immediately. `;
+    else if (alerts > 0) text += `${alerts} zones need irrigation. `;
+    else text += `Moisture is optimal across all zones. `;
+    text += `Average moisture is ${avgMoist}% and temperature is ${avgTemp}°C.`;
+    if (parseFloat(avgTemp) > 32) text += ` Temperature is high — consider shade nets.`;
   }
 
   const sarvamLangMap = { hi: 'hi-IN', en: 'en-IN', mr: 'mr-IN' };
