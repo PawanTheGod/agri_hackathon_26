@@ -9,6 +9,7 @@ import { COLORS, SHADOWS } from '../theme';
 import { getDashboard } from '../services/api';
 import { speak, stopSpeaking } from '../services/tts';
 import { useLang } from '../context/LanguageContext';
+import { useNavigation } from '@react-navigation/native';
 import Skeleton from '../components/Skeleton';
 
 const FARM_ID = 'farm_001';
@@ -22,6 +23,7 @@ const ZONE_LABELS = [
 
 export default function FarmMap() {
   const { t, lang } = useLang();
+  const navigation = useNavigation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -110,7 +112,11 @@ export default function FarmMap() {
             const nodeTitle = lang === 'hi' ? zone.dir : (lang === 'mr' ? zone.dirMr : zone.dirEn);
             
             return (
-              <View key={i} style={[styles.gridCell, { backgroundColor: zone.bg, borderColor: zone.color + '15' }]}>
+              <TouchableOpacity 
+                key={i} 
+                style={[styles.gridCell, { backgroundColor: zone.bg, borderColor: zone.color + '15' }]}
+                onPress={() => navigation.navigate('ZoneDetail', { zoneId: node?.id || i, zoneTitle: zone.dirEn })}
+              >
                 <Text style={styles.gridEmoji}>{zone.emoji}</Text>
                 <Text style={[styles.gridTitle, { color: zone.color }]}>{nodeTitle}</Text>
                 
@@ -124,7 +130,7 @@ export default function FarmMap() {
                     </>
                   ) : <Skeleton width={50} height={15} />}
                 </View>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -142,7 +148,11 @@ export default function FarmMap() {
         {nodes.map((node, i) => {
           const zone = ZONE_LABELS[i] || {};
           return (
-            <View key={node.id} style={styles.nodeCard}>
+            <TouchableOpacity 
+              key={node.id} 
+              style={styles.nodeCard}
+              onPress={() => navigation.navigate('ZoneDetail', { zoneId: node.id, zoneTitle: zone.dirEn })}
+            >
               <View style={[styles.nodeIconWrap, { backgroundColor: zone.bg }]}>
                 <Text style={styles.nodeEmoji}>{zone.emoji}</Text>
               </View>
@@ -155,7 +165,7 @@ export default function FarmMap() {
                 </View>
               </View>
               <View style={[styles.nodeStatusDot, { backgroundColor: getStatusColor(node.status) }]} />
-            </View>
+            </TouchableOpacity>
           );
         })}
 

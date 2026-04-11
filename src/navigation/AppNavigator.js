@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Platform, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, Platform, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createStackNavigator } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { COLORS } from '../theme';
 import { useLang } from '../context/LanguageContext';
 
@@ -12,31 +15,20 @@ import NPKTest     from '../screens/NPKTest';
 import FarmMap     from '../screens/FarmMap';
 import AdminScreen from '../screens/AdminScreen';
 import LoginScreen from '../screens/LoginScreen';
+import SplashScreen from '../screens/SplashScreen';
+import AnalyticsScreen from '../screens/AnalyticsScreen';
+import AlertsScreen from '../screens/AlertsScreen';
+import ZoneDetailScreen from '../screens/ZoneDetailScreen';
 
 const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 let adminTapCount = 0;
 let adminTapTimer = null;
 
-export default function AppNavigator() {
-  const [isAdminMode, setIsAdminMode] = useState(false);
-  const [authFarmer, setAuthFarmer] = useState(null);
+function BottomTabNav({ handleLogout, handleAdmin }) {
   const { t } = useLang();
-
-  const handleLogout = () => {
-    setAuthFarmer(null);
-  };
-
-  if (isAdminMode) {
-    return <AdminScreen onExitAdmin={() => setIsAdminMode(false)} />;
-  }
-
-  if (!authFarmer) {
-    return <LoginScreen onLogin={setAuthFarmer} onOpenAdmin={() => setIsAdminMode(true)} />;
-  }
-
   return (
-    <NavigationContainer>
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
@@ -44,8 +36,21 @@ export default function AppNavigator() {
             let iconName;
             if (route.name === 'Home')     iconName = focused ? 'home'                     : 'home-outline';
             if (route.name === 'Advisory') iconName = focused ? 'book-open-variant'         : 'book-open-page-variant-outline';
+            if (route.name === 'Analytics') iconName = focused ? 'chart-box'               : 'chart-box-outline';
             if (route.name === 'NPKTest')  iconName = focused ? 'flask-round-bottom'        : 'flask-round-bottom-outline';
             if (route.name === 'Map')      iconName = focused ? 'map-marker-radius'         : 'map-marker-radius-outline';
+            if (route.name === 'Alerts')   iconName = focused ? 'bell'                      : 'bell-outline';
+            
+            // Add custom badge specifically for Alerts
+            if (route.name === 'Alerts') {
+              return (
+                <View style={{ width: 24, height: 24, margin: 5 }}>
+                  <MaterialCommunityIcons name={iconName} size={focused ? 28 : 24} color={color} />
+                  <View style={{ position: 'absolute', right: -6, top: -3, backgroundColor: '#E53935', borderRadius: 6, width: 12, height: 12, justifyContent: 'center', alignItems: 'center' }} />
+                </View>
+              );
+            }
+            
             return <MaterialCommunityIcons name={iconName} size={focused ? 28 : 24} color={color} />;
           },
           tabBarActiveTintColor: COLORS.primary,
@@ -65,7 +70,7 @@ export default function AppNavigator() {
               adminTapTimer = setTimeout(() => { adminTapCount = 0; }, 2000);
               if (adminTapCount >= 3) {
                 adminTapCount = 0;
-                setIsAdminMode(true);
+                handleAdmin();
               }
             },
           }}
@@ -74,26 +79,24 @@ export default function AppNavigator() {
             <DashboardWrapper
               {...props}
               onLogout={handleLogout}
-              onAdmin={() => setIsAdminMode(true)}
+              onAdmin={handleAdmin}
             />
           )}
         </Tab.Screen>
 
         <Tab.Screen name="Advisory" component={Advisory} options={{ title: t('सलाह', 'Advisory', 'सल्ला') }} />
+        <Tab.Screen name="Analytics" component={AnalyticsScreen} options={{ title: t('विश्लेषण', 'Analytics', 'विश्लेषण') }} />
         <Tab.Screen name="NPKTest"  component={NPKTest}  options={{ title: t('मिट्टी जाँच', 'Soil Test', 'माती परीक्षण') }} />
         <Tab.Screen name="Map"      component={FarmMap}  options={{ title: t('नक्शा', 'Map', 'नकाशा') }} />
+        <Tab.Screen name="Alerts"   component={AlertsScreen} options={{ title: t('अलर्ट', 'Alerts', 'अलर्ट') }} />
       </Tab.Navigator>
-    </NavigationContainer>
   );
 }
 
 // ─── Wrapper: intercepts __LOGOUT__ and __ADMIN__ navigation from Dashboard ──
 function DashboardWrapper({ navigation, route, onLogout, onAdmin }) {
-  // Listen for the special route signals
   React.useEffect(() => {
     const unsubscribe = navigation.addListener('state', () => {});
-
-    // Patch navigation to intercept __LOGOUT__ and __ADMIN__
     const origNavigate = navigation.navigate.bind(navigation);
     navigation.navigate = (name, params) => {
       if (name === '__LOGOUT__') {
@@ -106,15 +109,49 @@ function DashboardWrapper({ navigation, route, onLogout, onAdmin }) {
       }
       origNavigate(name, params);
     };
-
     return () => {
-      // Restore
       navigation.navigate = origNavigate;
       unsubscribe();
     };
   }, [navigation, onLogout, onAdmin]);
 
   return <Dashboard navigation={navigation} route={route} />;
+}
+
+export default function AppNavigator() {
+  const [isAdminMode, setIsAdminMode] = useState(false);
+
+  if (isAdminMode) {
+    return <AdminScreen onExitAdmin={() => setIsAdminMode(false)} />;
+  }
+
+  return (
+    <NavigationContainer>
+       <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
+          <Stack.Screen name="Splash" component={SplashScreen} />
+          <Stack.Screen name="Login">
+            {(props) => <LoginScreen {...props} onOpenAdmin={() => setIsAdminMode(true)} />}
+           </Stack.Screen>
+          <Stack.Screen name="ZoneDetail" component={ZoneDetailScreen} />
+          <Stack.Screen name="App">
+            {(props) => (
+              <BottomTabNav 
+                {...props} 
+                handleAdmin={() => setIsAdminMode(true)} 
+                handleLogout={async () => {
+                  try {
+                    await AsyncStorage.removeItem('authFarmer');
+                    props.navigation.replace('Login');
+                  } catch (e) {
+                    console.error('Failed to log out', e);
+                  }
+                }} 
+              />
+            )}
+          </Stack.Screen>
+       </Stack.Navigator>
+    </NavigationContainer>
+  );
 }
 
 const styles = StyleSheet.create({
